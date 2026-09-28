@@ -40,7 +40,6 @@ cropvision-backend/
 │   │   │   ├── disease_pest_service.py  Image analysis prompt + response validation
 │   │   │   ├── advisory_service.py      Field advisory
 │   │   │   └── panchayat_service.py     Krishi Panchayat multi-expert review
-│   │   ├── google_auth_service.py       "Continue with Google" token check
 │   │   ├── recommendation_service.py    Rule-based crop + fertilizer engine
 │   │   ├── irrigation_service.py        Rule-based irrigation advisory
 │   │   ├── yield_service.py             Heuristic yield estimate
@@ -94,7 +93,6 @@ Frontend and backend deploy to **Vercel** as two separate projects, with the dat
 | `MONGO_URI` (or `MONGODB_URI`) | Local MongoDB or Atlas connection string. Default `mongodb://localhost:27017/cropvision` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_NAME` | Email for login codes (Gmail: use an App Password) |
 | `OTP_TTL_MINUTES`, `OTP_MAX_ATTEMPTS`, `OTP_RESEND_SECONDS`, `RATE_LIMIT_OTP` | Login code rules (10 min, 5 tries, 60 s, 5/min) |
-| `GOOGLE_CLIENT_ID` | OAuth Client ID for "Continue with Google" (empty = button hidden) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Fixed admin-panel login (change in production) |
 | `WEATHER_API_URL`, `GEOCODING_API_URL`, `CLIMATE_API_URL` | Open-Meteo forecast, place lookup, historical weather (no key needed) |
 | `TRUST_PROXY`, `RATELIMIT_STORAGE_URI` | Production: real client IPs behind Vercel's proxy, rate limits shared across instances |
@@ -113,8 +111,6 @@ All responses use `{ "success": true, "data": ..., "message": ... }` or
 | GET | `/health` | — | Health check: database ping + which services are configured (200 ok / 503 database down) |
 | POST | `/api/auth/otp/request` | — | Email a 6-digit code (`purpose`: `login` or `register` + `name`, `phone`) |
 | POST | `/api/auth/otp/verify` | — | Check the code → `{user, access_token}` (creates the account for `register`) |
-| GET | `/api/auth/providers` | — | `{google_client_id}` — whether to show the Google button |
-| POST | `/api/auth/google` | — | Google sign-in token (`access_token`) → `{user, access_token, created}` |
 | GET | `/api/auth/me` | JWT | Current user |
 | POST | `/api/disease/analyze` | JWT | Upload a crop/leaf image for AI analysis |
 | GET | `/api/disease/history` | JWT | Paginated analysis history |
@@ -151,14 +147,6 @@ code (collection `otp_codes`, auto-deleted by a TTL index), allows 5 wrong tries
 10 minutes, and lets a new code be sent only after 60 seconds. Emails go out over SMTP
 (`app/services/email_service.py`); in tests they're captured in `email_service.outbox` instead.
 The admin panel keeps its separate email + password login.
-
-**Continue with Google** (optional): the login and sign-up pages have a "Continue with Google"
-button that opens Google's sign-in popup; it works once `GOOGLE_CLIENT_ID` is set in `.env`.
-The backend checks the returned token with Google (`app/services/google_auth_service.py`): it must be
-issued to our Client ID and belong to a verified email. It then signs in the account with that email
-or creates one. To get a Client ID: Google Cloud Console → APIs & Services →
-Credentials → Create OAuth client ID → *Web application*, with `http://localhost:5173` and
-`http://localhost` as Authorized JavaScript origins.
 
 ## Krishi Mitra (farm assistant)
 

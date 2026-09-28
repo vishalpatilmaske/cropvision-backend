@@ -55,7 +55,6 @@ On https://vercel.com → **Add New… → Project** → import **cropvision-bac
 | `AI_MAX_RETRIES` | `1` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM_NAME` | same as your local `.env` |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | your admin login (use a strong password) |
-| `GOOGLE_CLIENT_ID` | optional, for "Continue with Google" |
 
 Click **Deploy**. When it finishes, open `https://cropvision-api.vercel.app/health` — you should see
 `{"ai_configured": true, "status": "ok"}`.
@@ -80,11 +79,6 @@ Nothing to do: the backend always allows `https://cropvision-frontend.vercel.app
 Only for an **extra** site (e.g. a custom domain): set `ALLOWED_ORIGINS` on the backend
 (comma-separated) and redeploy. It adds to the built-in list; it never removes it.
 
-## 6. Sign in with Google (optional)
-
-Google Cloud Console → your OAuth client → **Authorized JavaScript origins** → add the frontend URL
-(`https://cropvision-web.vercel.app`). Set `GOOGLE_CLIENT_ID` on the backend project and redeploy.
-
 ## Updating
 
 Push to either repo — its Vercel project redeploys automatically:
@@ -103,5 +97,4 @@ git add . && git commit -m "Describe the change" && git push
 - **Cold starts:** after a quiet period the first request takes a few extra seconds while the
   function starts; later requests are fast.
 - **Logs:** Vercel dashboard → backend project → **Logs**.
-- **Custom domain:** project → **Settings → Domains**. Add it to the backend's `ALLOWED_ORIGINS` (and
-  to Google's authorized origins) too.
+- **Custom domain:** project → **Settings → Domains**. Add it to the backend's `ALLOWED_ORIGINS` too.

@@ -2,8 +2,6 @@
 
     POST /api/auth/otp/request  {email, purpose: "login"|"register", name?, phone?}
     POST /api/auth/otp/verify   {email, purpose, code}  -> {user, access_token}
-    GET  /api/auth/providers    -> {google_client_id} (null when Google sign-in is off)
-    POST /api/auth/google       {access_token}  -> {user, access_token, created}
 
 (The admin panel keeps its own fixed-credential login in admin_routes.py.)
 """
@@ -17,11 +15,6 @@ from pymongo.errors import DuplicateKeyError
 from app.extensions import limiter
 from app.models.user import User
 from app.services.email_service import EmailError
-from app.services.google_auth_service import (
-    GoogleAuthError,
-    GoogleUnavailableError,
-    verify_google_access_token,
-)
 from app.services.otp_service import PURPOSES, OtpError, request_otp, verify_otp
 from app.utils.responses import error_response, success_response
 
@@ -125,50 +118,6 @@ def otp_verify():
 
     token = create_access_token(identity=user.id)
     return success_response({"user": user.to_dict(), "access_token": token}, message, status)
-
-
-@auth_bp.get("/providers")
-def providers():
-    """Which extra sign-in options the login page should show. The Google
-    Client ID is public by design (it's embedded in every Google button)."""
-    return success_response({"google_client_id": current_app.config.get("GOOGLE_CLIENT_ID") or None})
-
-
-@auth_bp.post("/google")
-@limiter.limit(lambda: current_app.config.get("RATE_LIMIT_OTP", "5 per minute"))
-def google_sign_in():
-    """Sign in (or sign up) with the access token from Google's sign-in popup.
-    A new email gets an account straight away -- Google has already verified it."""
-    if not current_app.config.get("GOOGLE_CLIENT_ID"):
-        return error_response("GOOGLE_NOT_CONFIGURED", "Google sign-in is not available.", 503)
-
-    google_token = (request.get_json(silent=True) or {}).get("access_token")
-    if not isinstance(google_token, str) or not google_token:
-        return error_response("VALIDATION_ERROR", "Missing Google sign-in token.", 400)
-
-    try:
-        profile = verify_google_access_token(google_token)
-    except GoogleAuthError as exc:
-        return error_response("GOOGLE_AUTH_FAILED", str(exc), 401)
-    except GoogleUnavailableError as exc:
-        return error_response("GOOGLE_UNAVAILABLE", str(exc), 502)
-
-    user = User.find_by_email(profile["email"])
-    created = False
-    if not user:
-        try:
-            user = User.create(name=profile["name"], email=profile["email"])
-            created = True
-        except DuplicateKeyError:  # created by a parallel request a moment ago
-            user = User.find_by_email(profile["email"])
-
-    token = create_access_token(identity=user.id)
-    logger.info("Google sign-in (new_account=%s).", created)
-    return success_response(
-        {"user": user.to_dict(), "access_token": token, "created": created},
-        "Account created successfully." if created else "Login successful.",
-        201 if created else 200,
-    )
 
 
 @auth_bp.get("/me")

@@ -7,7 +7,7 @@ def test_health_ok(client):
     body = resp.get_json()
     assert body["status"] == "ok"
     assert body["database"] == "ok"
-    assert set(body) == {"status", "database", "ai_configured", "email_configured", "google_sign_in"}
+    assert set(body) == {"status", "database", "ai_configured", "email_configured"}
 
 
 def test_health_reports_database_down(client, monkeypatch):

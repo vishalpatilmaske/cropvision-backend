@@ -100,7 +100,6 @@ def create_app(config_object=None):
             "database": database,
             "ai_configured": llm_client.is_available,
             "email_configured": bool(app.config.get("SMTP_USER") and app.config.get("SMTP_PASS")),
-            "google_sign_in": bool(app.config.get("GOOGLE_CLIENT_ID")),
         }
         return body, 200 if healthy else 503
 

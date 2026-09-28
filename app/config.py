@@ -78,9 +78,6 @@ class Config:
     OTP_RESEND_SECONDS = int(os.getenv("OTP_RESEND_SECONDS", "60"))
     RATE_LIMIT_OTP = os.getenv("RATE_LIMIT_OTP", "5 per minute")
 
-    # --- Sign in with Google (OAuth Client ID from Google Cloud Console; empty = button hidden) ---
-    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-
     # --- Admin (fixed credential, not stored in the database) ---
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@gmail.com")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "123456")
@@ -92,7 +89,6 @@ class TestConfig(Config):
     JWT_SECRET_KEY = "test-jwt-secret-key-for-automated-tests-only"
     MAIL_SUPPRESS_SEND = True  # emails go to app.services.email_service.outbox
     RATE_LIMIT_OTP = "1000 per minute"
-    GOOGLE_CLIENT_ID = ""  # tests turn it on explicitly
 
 
 def get_config():
