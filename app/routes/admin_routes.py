@@ -8,6 +8,7 @@ from flask import Blueprint, Response, current_app, request
 from flask_jwt_extended import create_access_token
 
 from app.extensions import limiter
+from app.models.newsletter import NewsletterSubscriber
 from app.models.user import User
 from app.routes.auth_routes import is_valid_email
 from app.services import admin_service
@@ -86,6 +87,23 @@ def export_users():
             row["health_checks"], row["last_active"] or "",
         ])
     filename = f"cropvision-users-{datetime.now(timezone.utc):%Y-%m-%d}.csv"
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@admin_bp.get("/newsletter/export")
+@admin_required
+def export_newsletter():
+    """Active newsletter subscribers as CSV."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["Email", "Subscribed"])
+    for row in NewsletterSubscriber.all_active():
+        writer.writerow([row["email"], row["subscribed_at"] or ""])
+    filename = f"cropvision-newsletter-{datetime.now(timezone.utc):%Y-%m-%d}.csv"
     return Response(
         buffer.getvalue(),
         mimetype="text/csv",

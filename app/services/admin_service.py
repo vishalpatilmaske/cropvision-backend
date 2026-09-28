@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from app.models.crop import Crop
 from app.models.disease_pest_prediction import DiseasePestPrediction
 from app.models.farm import Farm
+from app.models.newsletter import NewsletterSubscriber
 from app.models.recommendation import (
     CropRecommendation,
     FertilizerRecommendation,
@@ -87,6 +88,7 @@ def dashboard_stats() -> Dict[str, Any]:
         "health_checks_by_type": by_type,
         "average_health_score": round(avg_score["avg"], 1) if avg_score else None,
         "needs_expert_review": checks.count_documents({"needs_expert_confirmation": True}),
+        "newsletter_subscribers": NewsletterSubscriber.count_active(),
         "top_conditions": _top(checks, "condition_name", {"analysis_type": {"$ne": "healthy"}}),
         "top_crops": _top(checks, "crop_name", {}),
         "trend": {

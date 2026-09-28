@@ -112,6 +112,8 @@ All responses use `{ "success": true, "data": ..., "message": ... }` or
 | POST | `/api/auth/otp/request` | — | Email a 6-digit code (`purpose`: `login` or `register` + `name`, `phone`) |
 | POST | `/api/auth/otp/verify` | — | Check the code → `{user, access_token}` (creates the account for `register`) |
 | GET | `/api/auth/me` | JWT | Current user |
+| POST | `/api/newsletter/subscribe` | — | Footer newsletter sign-up `{email}` → saved + welcome email (already-subscribed is a friendly 200) |
+| GET | `/api/newsletter/unsubscribe?email=&token=` | — | Signed one-click unsubscribe link from the welcome email |
 | POST | `/api/disease/analyze` | JWT | Upload a crop/leaf image for AI analysis |
 | GET | `/api/disease/history` | JWT | Paginated analysis history |
 | GET | `/api/disease/history/:id` | JWT | One analysis record |
@@ -136,6 +138,7 @@ All responses use `{ "success": true, "data": ..., "message": ... }` or
 | GET/POST | `/api/admin/users` | Admin | List (search, `sort=newest\|oldest\|name`, health-check count, last active) / create users |
 | GET/PUT/DELETE | `/api/admin/users/:id` | Admin | One user with activity counts + recent health checks / edit / delete (cascades) |
 | GET | `/api/admin/users/export` | Admin | All users as CSV |
+| GET | `/api/admin/newsletter/export` | Admin | Active newsletter subscribers as CSV |
 | GET | `/api/admin/health-checks` | Admin | All farmers' health checks (`analysis_type`, `crop_name`, `user_id`, `needs_review`) |
 | GET/DELETE | `/api/admin/health-checks/:id` | Admin | One full report with its farmer / delete it |
 

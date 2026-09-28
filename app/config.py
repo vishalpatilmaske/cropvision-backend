@@ -60,6 +60,7 @@ class Config:
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     RATE_LIMIT_ANALYZE = os.getenv("RATE_LIMIT_ANALYZE", "10 per minute")
     RATE_LIMIT_CHAT = os.getenv("RATE_LIMIT_CHAT", "20 per minute")
+    RATE_LIMIT_NEWSLETTER = os.getenv("RATE_LIMIT_NEWSLETTER", "5 per minute")
 
     MAX_CONTENT_LENGTH = MAX_UPLOAD_SIZE_BYTES + 1024 * 1024  # headroom for form fields
 
@@ -89,6 +90,7 @@ class TestConfig(Config):
     JWT_SECRET_KEY = "test-jwt-secret-key-for-automated-tests-only"
     MAIL_SUPPRESS_SEND = True  # emails go to app.services.email_service.outbox
     RATE_LIMIT_OTP = "1000 per minute"
+    RATE_LIMIT_NEWSLETTER = "1000 per minute"
 
 
 def get_config():

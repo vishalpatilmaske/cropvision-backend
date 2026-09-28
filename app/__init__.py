@@ -62,12 +62,14 @@ def create_app(config_object=None):
 
     mongo.init_app(app)
     try:
+        from app.models.newsletter import NewsletterSubscriber
         from app.services.otp_service import ensure_indexes
 
         with app.app_context():
             ensure_indexes()
+            NewsletterSubscriber.ensure_indexes()
     except Exception:  # noqa: BLE001 - Mongo may be down at boot; the app still starts
-        app.logger.warning("Could not create otp_codes indexes (is MongoDB running?).")
+        app.logger.warning("Could not create database indexes (is MongoDB running?).")
     jwt.init_app(app)
     limiter.init_app(app)
     cors.init_app(
