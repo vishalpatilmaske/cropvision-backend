@@ -16,7 +16,7 @@ from flask import Blueprint, current_app, request
 
 from app.extensions import limiter
 from app.models.newsletter import NewsletterSubscriber
-from app.routes.auth_routes import is_valid_email
+from app.routes.auth_routes import email_typo_error, is_valid_email
 from app.services.email_service import EmailError, send_email
 from app.utils.responses import error_response, success_response
 
@@ -64,6 +64,9 @@ def subscribe():
     email = str((request.get_json(silent=True) or {}).get("email") or "").strip().lower()
     if not is_valid_email(email):
         return error_response("VALIDATION_ERROR", "Please enter a valid email address.", 400)
+    typo = email_typo_error(email)
+    if typo:
+        return typo
 
     status, is_new = NewsletterSubscriber.subscribe(email)
     if not is_new:

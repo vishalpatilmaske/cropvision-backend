@@ -10,7 +10,7 @@ from flask_jwt_extended import create_access_token
 from app.extensions import limiter
 from app.models.newsletter import NewsletterSubscriber
 from app.models.user import User
-from app.routes.auth_routes import is_valid_email
+from app.routes.auth_routes import email_typo_error, is_valid_email, phone_taken_error
 from app.services import admin_service
 from app.utils.admin_auth import admin_required
 from app.utils.pagination import get_pagination_params, paginated_response
@@ -132,8 +132,14 @@ def create_user():
         return error_response("VALIDATION_ERROR", "name and email are required.", 400)
     if not is_valid_email(email):
         return error_response("VALIDATION_ERROR", "Please enter a valid email address.", 400)
+    typo = email_typo_error(email)
+    if typo:
+        return typo
     if User.find_by_email(email):
         return error_response("EMAIL_EXISTS", "A user with this email already exists.", 409)
+    taken = phone_taken_error(phone)
+    if taken:
+        return taken
 
     # The farmer signs in with an emailed code, so no password is set here.
     user = User.create(name=name, email=email, phone=phone)
@@ -161,6 +167,9 @@ def update_user(user_id):
         email = (payload.get("email") or "").strip().lower()
         if not is_valid_email(email):
             return error_response("VALIDATION_ERROR", "Please enter a valid email address.", 400)
+        typo = email_typo_error(email) if email != user.to_dict()["email"] else None
+        if typo:
+            return typo
         existing = User.find_by_email(email)
         if existing and existing.id != user.id:
             return error_response("EMAIL_EXISTS", "Another user already uses this email.", 409)
@@ -168,6 +177,9 @@ def update_user(user_id):
 
     if "phone" in payload:
         fields["phone"] = (payload.get("phone") or "").strip() or None
+        taken = phone_taken_error(fields["phone"], exclude_user_id=user.id)
+        if taken:
+            return taken
 
     if fields:
         user.update(fields)

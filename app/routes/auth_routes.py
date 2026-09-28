@@ -16,6 +16,7 @@ from app.extensions import limiter
 from app.models.user import User
 from app.services.email_service import EmailError
 from app.services.otp_service import PURPOSES, OtpError, request_otp, verify_otp
+from app.utils.contact_checks import suggest_email_fix
 from app.utils.responses import error_response, success_response
 
 logger = logging.getLogger("cropvision.routes.auth")
@@ -39,6 +40,27 @@ def _read_email_and_purpose(payload):
     return email, purpose
 
 
+def email_typo_error(email: str):
+    """400 with a suggestion when the domain is a common misspelling, else None."""
+    suggestion = suggest_email_fix(email)
+    if not suggestion:
+        return None
+    return error_response(
+        "EMAIL_TYPO", f"Did you mean {suggestion}? Please check your email address.", 400,
+        {"suggestion": suggestion},
+    )
+
+
+def phone_taken_error(phone, exclude_user_id=None):
+    """409 when another account already uses this phone number, else None."""
+    owner = User.find_by_phone(phone)
+    if owner and owner.id != exclude_user_id:
+        return error_response(
+            "PHONE_EXISTS", "This phone number is already linked to another account.", 409
+        )
+    return None
+
+
 def _otp_error(exc: OtpError):
     return error_response(exc.code, str(exc), exc.status, exc.details)
 
@@ -55,6 +77,12 @@ def otp_request():
     data = {}
     if purpose == "login":
         if not User.find_by_email(email):
+            suggestion = suggest_email_fix(email)
+            if suggestion and User.find_by_email(suggestion):
+                return error_response(
+                    "ACCOUNT_NOT_FOUND", f"No account found with this email. Did you mean {suggestion}?", 404,
+                    {"suggestion": suggestion},
+                )
             return error_response(
                 "ACCOUNT_NOT_FOUND", "No account found with this email. Please sign up first.", 404
             )
@@ -65,10 +93,16 @@ def otp_request():
             return error_response("VALIDATION_ERROR", "Please enter your name.", 400)
         if len(name) > 120:
             return error_response("VALIDATION_ERROR", "Name is too long.", 400)
+        typo = email_typo_error(email)
+        if typo:
+            return typo
         if User.find_by_email(email):
             return error_response(
                 "EMAIL_EXISTS", "An account with this email already exists. Please sign in instead.", 409
             )
+        taken = phone_taken_error(phone)
+        if taken:
+            return taken
         data = {"name": name, "phone": phone}
 
     try:
@@ -110,9 +144,14 @@ def otp_verify():
     else:
         if User.find_by_email(email):
             return error_response("EMAIL_EXISTS", "An account with this email already exists.", 409)
+        taken = phone_taken_error(data.get("phone"))
+        if taken:
+            return taken
         try:
             user = User.create(name=data.get("name"), email=email, phone=data.get("phone"))
-        except DuplicateKeyError:
+        except DuplicateKeyError as exc:  # a parallel sign-up won the race
+            if "phone_key" in str(exc):
+                return error_response("PHONE_EXISTS", "This phone number is already linked to another account.", 409)
             return error_response("EMAIL_EXISTS", "An account with this email already exists.", 409)
         message, status = "Account created successfully.", 201
 

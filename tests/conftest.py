@@ -4,7 +4,7 @@ import re
 import pytest
 from PIL import Image
 
-from app import create_app
+from app import _ensure_indexes, create_app
 from app.config import TestConfig
 from app.extensions import mongo as _mongo
 from app.services import email_service
@@ -15,6 +15,7 @@ def app():
     application = create_app(TestConfig)
     with application.app_context():
         _mongo.client.drop_database(_mongo.db.name)
+        _ensure_indexes(application)  # the drop removed them; tests need the same rules as production
         yield application
         _mongo.client.drop_database(_mongo.db.name)
 

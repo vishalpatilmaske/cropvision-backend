@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from app.extensions import mongo
+from app.utils.contact_checks import phone_key
 from app.utils.mongo_helpers import contains_regex, iso, to_object_id
 
 
@@ -15,10 +16,28 @@ class User:
     def _col():
         return mongo.db.users
 
+    @classmethod
+    def ensure_indexes(cls) -> None:
+        """One account per email and per phone number. Older records get their
+        phone_key filled in first so the unique index can be built."""
+        col = cls._col()
+        for doc in col.find({"phone": {"$nin": [None, ""]}, "phone_key": {"$exists": False}}, {"phone": 1}):
+            col.update_one({"_id": doc["_id"]}, {"$set": {"phone_key": phone_key(doc["phone"])}})
+        col.create_index("email", unique=True)
+        col.create_index(
+            "phone_key", unique=True, partialFilterExpression={"phone_key": {"$type": "string"}}
+        )
+
     # --- lookups -----------------------------------------------------
     @classmethod
     def find_by_email(cls, email: str) -> Optional["User"]:
         doc = cls._col().find_one({"email": email})
+        return cls(doc) if doc else None
+
+    @classmethod
+    def find_by_phone(cls, phone: Optional[str]) -> Optional["User"]:
+        key = phone_key(phone)
+        doc = cls._col().find_one({"phone_key": key}) if key else None
         return cls(doc) if doc else None
 
     @classmethod
@@ -63,6 +82,8 @@ class User:
             "phone": phone,
             "created_at": datetime.now(timezone.utc),
         }
+        if phone_key(phone):
+            doc["phone_key"] = phone_key(phone)
         result = cls._col().insert_one(doc)
         doc["_id"] = result.inserted_id
         return cls(doc)
@@ -71,7 +92,14 @@ class User:
         allowed = {k: v for k, v in fields.items() if k in {"name", "email", "phone"}}
         if not allowed:
             return
-        self._col().update_one({"_id": self._doc["_id"]}, {"$set": allowed})
+        update = {"$set": allowed}
+        if "phone" in allowed:
+            key = phone_key(allowed["phone"])
+            if key:
+                allowed["phone_key"] = key
+            else:
+                update["$unset"] = {"phone_key": ""}
+        self._col().update_one({"_id": self._doc["_id"]}, update)
         self._doc.update(allowed)
 
     @classmethod

@@ -33,11 +33,9 @@ def _col():
 
 
 def ensure_indexes() -> None:
-    """TTL index lets MongoDB delete expired codes on its own; the unique
-    email index stops two quick sign-ups from creating duplicate accounts."""
+    """TTL index lets MongoDB delete expired codes on its own."""
     _col().create_index("expires_at", expireAfterSeconds=0)
     _col().create_index([("email", 1), ("purpose", 1)], unique=True)
-    mongo.db.users.create_index("email", unique=True)
 
 
 def _now() -> datetime:

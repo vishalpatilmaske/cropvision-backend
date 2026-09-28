@@ -32,6 +32,25 @@ def _allowed_origins(config) -> list:
     return list(dict.fromkeys(combined))
 
 
+def _ensure_indexes(app: Flask) -> None:
+    """Create each collection's indexes on its own, so one failure (MongoDB down,
+    or old duplicate data blocking a unique index) doesn't skip the rest."""
+    from app.models.newsletter import NewsletterSubscriber
+    from app.models.user import User
+    from app.services import otp_service
+
+    with app.app_context():
+        for name, create in [
+            ("users", User.ensure_indexes),
+            ("otp_codes", otp_service.ensure_indexes),
+            ("newsletter_subscribers", NewsletterSubscriber.ensure_indexes),
+        ]:
+            try:
+                create()
+            except Exception as exc:  # noqa: BLE001 - the app still starts; the log says what to fix
+                app.logger.warning("Could not create %s indexes: %s", name, exc)
+
+
 _DEV_SECRETS = {"dev-secret-change-me", "dev-jwt-secret-change-me"}
 
 
@@ -61,15 +80,7 @@ def create_app(config_object=None):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     mongo.init_app(app)
-    try:
-        from app.models.newsletter import NewsletterSubscriber
-        from app.services.otp_service import ensure_indexes
-
-        with app.app_context():
-            ensure_indexes()
-            NewsletterSubscriber.ensure_indexes()
-    except Exception:  # noqa: BLE001 - Mongo may be down at boot; the app still starts
-        app.logger.warning("Could not create database indexes (is MongoDB running?).")
+    _ensure_indexes(app)
     jwt.init_app(app)
     limiter.init_app(app)
     cors.init_app(

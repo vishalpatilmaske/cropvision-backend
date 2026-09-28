@@ -151,6 +151,12 @@ code (collection `otp_codes`, auto-deleted by a TTL index), allows 5 wrong tries
 (`app/services/email_service.py`); in tests they're captured in `email_service.outbox` instead.
 The admin panel keeps its separate email + password login.
 
+**One person, one account.** The database allows each email and each phone number only once
+(phone numbers are compared digits-only, so `+91 74105 38585`, `07410538585` and `7410538585`
+match). Sign-up, the admin panel and the newsletter also catch common email-domain typos
+(`gamil.com`, `yaho.com`, `gmail.con`, …) and answer `EMAIL_TYPO` with a suggested fix, shown
+in the UI as a one-tap "Use …" button (`app/utils/contact_checks.py`).
+
 ## Krishi Mitra (farm assistant)
 
 A floating chat button (bottom-right, every logged-in page) opens an AI agent built on the OpenAI
