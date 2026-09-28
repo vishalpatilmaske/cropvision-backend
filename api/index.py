@@ -1,6 +1,6 @@
 """Vercel entry point: the whole Flask app as one serverless function.
 
-vercel.json rewrites every path here; Flask still sees the original URL
+Vercel detects Flask and sends every request here with its original path
 (e.g. /api/disease/analyze), so routing works as usual. Local development
 keeps using `python run.py`.
 """

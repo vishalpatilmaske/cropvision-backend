@@ -22,7 +22,7 @@ React app (browser)  ->  Flask REST API  ->  OpenAI (vision LLM)
 cropvision-backend/
 ├── run.py                   Local entry point — serves on :8000
 ├── api/index.py             Vercel entry point (Flask as a serverless function)
-├── vercel.json              Vercel routing + time limit
+├── vercel.json              Vercel function time limit
 ├── requirements.txt         Runtime dependencies (what Vercel installs)
 ├── requirements-dev.txt     + test tools
 ├── .env.example             Template for .env
