@@ -26,6 +26,12 @@ def _parse_origins(value: str) -> list:
     return [o.strip().rstrip("/") for o in value.split(",") if o.strip()]
 
 
+def _allowed_origins(config) -> list:
+    """Built-in frontends plus any extra ALLOWED_ORIGINS, without duplicates."""
+    combined = _parse_origins(config["DEFAULT_ALLOWED_ORIGINS"] + "," + config["ALLOWED_ORIGINS"])
+    return list(dict.fromkeys(combined))
+
+
 _DEV_SECRETS = {"dev-secret-change-me", "dev-jwt-secret-change-me"}
 
 
@@ -66,7 +72,7 @@ def create_app(config_object=None):
     limiter.init_app(app)
     cors.init_app(
         app,
-        resources={r"/api/*": {"origins": _parse_origins(app.config["ALLOWED_ORIGINS"])}},
+        resources={r"/api/*": {"origins": _allowed_origins(app.config)}},
         supports_credentials=True,
     )
 

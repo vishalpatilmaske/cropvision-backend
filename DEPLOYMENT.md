@@ -50,7 +50,6 @@ On https://vercel.com → **Add New… → Project** → import **cropvision-bac
 | `MONGO_URI` | your Atlas connection string from step 1 |
 | `RATELIMIT_STORAGE_URI` | the same Atlas connection string |
 | `TRUST_PROXY` | `true` |
-| `ALLOWED_ORIGINS` | `https://cropvision-web.vercel.app` (your frontend URL — set after step 4) |
 | `OPENAI_API_KEY` | your key |
 | `AI_REQUEST_TIMEOUT_SECONDS` | `25` |
 | `AI_MAX_RETRIES` | `1` |
@@ -74,12 +73,12 @@ Click **Deploy**.
 
 ## 5. Connect the two
 
-1. Copy the frontend URL (e.g. `https://cropvision-web.vercel.app`).
-2. Backend project → **Settings → Environment Variables** → set `ALLOWED_ORIGINS` to it.
-   Several are allowed, comma-separated (e.g. also your custom domain).
-3. Backend project → **Deployments** → ⋯ → **Redeploy** (env var changes need a redeploy).
+Nothing to do: the backend always allows `https://cropvision-frontend.vercel.app` and
+`http://localhost:5173` (CORS), and the frontend's `.env.production` points at
+`https://cropvision-backend.vercel.app`. Open the frontend URL and sign up — the site is live.
 
-Open the frontend URL and sign up — the site is live.
+Only for an **extra** site (e.g. a custom domain): set `ALLOWED_ORIGINS` on the backend
+(comma-separated) and redeploy. It adds to the built-in list; it never removes it.
 
 ## 6. Sign in with Google (optional)
 
@@ -104,5 +103,5 @@ git add . && git commit -m "Describe the change" && git push
 - **Cold starts:** after a quiet period the first request takes a few extra seconds while the
   function starts; later requests are fast.
 - **Logs:** Vercel dashboard → backend project → **Logs**.
-- **Custom domain:** project → **Settings → Domains**. Add it to `ALLOWED_ORIGINS` (and to Google's
-  authorized origins) too.
+- **Custom domain:** project → **Settings → Domains**. Add it to the backend's `ALLOWED_ORIGINS` (and
+  to Google's authorized origins) too.

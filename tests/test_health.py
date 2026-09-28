@@ -29,31 +29,30 @@ def _preflight(client, origin):
     )
 
 
-def test_default_origins_include_deployed_frontend(monkeypatch):
-    import importlib
 
-    from app import config
-
-    monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
-    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)  # ignore the local .env
-    fresh = importlib.reload(config)
-    try:
-        assert "https://cropvision-frontend.vercel.app" in fresh.Config.ALLOWED_ORIGINS
-    finally:
-        monkeypatch.undo()
-        importlib.reload(config)
-
-
-def test_cors_allows_configured_origin_despite_typos():
-    """A trailing slash and stray spaces in ALLOWED_ORIGINS must still match."""
+def _app_with_origins(extra):
     from app import create_app
     from app.config import TestConfig
 
     class Cfg(TestConfig):
-        ALLOWED_ORIGINS = " https://cropvision-frontend.vercel.app/ , http://localhost:5173"
+        ALLOWED_ORIGINS = extra
 
-    client = create_app(Cfg).test_client()
-    allowed = _preflight(client, "https://cropvision-frontend.vercel.app")
-    assert allowed.headers.get("Access-Control-Allow-Origin") == "https://cropvision-frontend.vercel.app"
-    blocked = _preflight(client, "https://evil.example.com")
-    assert "Access-Control-Allow-Origin" not in blocked.headers
+    return create_app(Cfg).test_client()
+
+
+def _allowed(client, origin):
+    return _preflight(client, origin).headers.get("Access-Control-Allow-Origin") == origin
+
+
+def test_deployed_frontend_always_allowed_even_if_env_lists_only_localhost():
+    """The real-world bug: Vercel had ALLOWED_ORIGINS=http://localhost:5173."""
+    client = _app_with_origins("http://localhost:5173")
+    assert _allowed(client, "https://cropvision-frontend.vercel.app")
+    assert _allowed(client, "http://localhost:5173")
+
+
+def test_allowed_origins_adds_extra_sites_despite_typos():
+    client = _app_with_origins(" https://cropvision.in/ , ")
+    assert _allowed(client, "https://cropvision.in")
+    assert _allowed(client, "https://cropvision-frontend.vercel.app")
+    assert not _allowed(client, "https://evil.example.com")

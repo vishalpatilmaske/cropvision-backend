@@ -30,11 +30,10 @@ class Config:
     TRUST_PROXY = _bool_env("TRUST_PROXY", False)
 
     # --- CORS ---
-    # Frontend URLs allowed to call the API (comma-separated). The deployed
-    # frontend is included by default; ALLOWED_ORIGINS replaces the whole list.
-    ALLOWED_ORIGINS = os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:5173,https://cropvision-frontend.vercel.app"
-    )
+    # Our own frontends are always allowed. ALLOWED_ORIGINS (comma-separated)
+    # adds more, e.g. a custom domain -- it never removes these.
+    DEFAULT_ALLOWED_ORIGINS = "http://localhost:5173,https://cropvision-frontend.vercel.app"
+    ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "")
 
     # --- Vision LLM (OpenAI GPT; disease/pest detection and the text-based
     #     advisory features are NOT a locally trained model, they are hosted

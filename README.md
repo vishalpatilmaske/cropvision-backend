@@ -88,7 +88,7 @@ Frontend and backend deploy to **Vercel** as two separate projects, with the dat
 | `FLASK_ENV` | `development`, or `production` (refuses weak secrets) |
 | `SECRET_KEY`, `JWT_SECRET` | Flask + JWT signing secrets |
 | `JWT_ACCESS_TOKEN_EXPIRES_HOURS` | Login session length (default 12) |
-| `ALLOWED_ORIGINS` | CORS origins, comma-separated (`http://localhost:5173`) |
+| `ALLOWED_ORIGINS` | Extra CORS origins, comma-separated. The local and deployed frontends are always allowed |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | Vision LLM (default model `gpt-4o`) |
 | `AI_REQUEST_TIMEOUT_SECONDS`, `AI_MAX_RETRIES` | AI call limits |
 | `MONGO_URI` (or `MONGODB_URI`) | Local MongoDB or Atlas connection string. Default `mongodb://localhost:27017/cropvision` |
