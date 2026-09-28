@@ -136,9 +136,12 @@ All responses use `{ "success": true, "data": ..., "message": ... }` or
 | GET | `/api/yield-baseline?crop_name=` | JWT | Average quintals/acre for a crop (read-only) |
 | GET | `/api/weather` | JWT | Weather + soil snapshot for lat/lon |
 | POST | `/api/admin/login` | — | Admin login |
-| GET | `/api/admin/stats` | Admin | Dashboard counts |
-| GET/POST | `/api/admin/users` | Admin | List / create users |
-| GET/PUT/DELETE | `/api/admin/users/:id` | Admin | Manage one user |
+| GET | `/api/admin/stats` | Admin | Dashboard: totals, last-7-day counts, results by type, top problems & crops, 14-day trends |
+| GET/POST | `/api/admin/users` | Admin | List (search, `sort=newest\|oldest\|name`, health-check count, last active) / create users |
+| GET/PUT/DELETE | `/api/admin/users/:id` | Admin | One user with activity counts + recent health checks / edit / delete (cascades) |
+| GET | `/api/admin/users/export` | Admin | All users as CSV |
+| GET | `/api/admin/health-checks` | Admin | All farmers' health checks (`analysis_type`, `crop_name`, `user_id`, `needs_review`) |
+| GET/DELETE | `/api/admin/health-checks/:id` | Admin | One full report with its farmer / delete it |
 
 ## Farmer sign in (email code, no password)
 

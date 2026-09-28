@@ -69,7 +69,12 @@ def test_admin_create_user_duplicate_email(client, admin_headers, auth_headers):
 def test_admin_stats(client, admin_headers, auth_headers):
     resp = client.get("/api/admin/stats", headers=admin_headers)
     assert resp.status_code == 200
-    assert resp.get_json()["data"]["total_users"] == 1
+    data = resp.get_json()["data"]
+    assert data["totals"]["users"] == 1
+    assert data["totals"]["health_checks"] == 0
+    assert data["last_7_days"]["new_users"] == 1
+    assert len(data["trend"]["signups"]) == data["trend"]["days"] == 14
+    assert data["trend"]["signups"][-1]["count"] == 1  # signed up today
 
 
 def test_admin_user_search_treats_input_as_plain_text(client, admin_headers, auth_headers):

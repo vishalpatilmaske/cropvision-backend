@@ -29,12 +29,22 @@ class User:
         doc = cls._col().find_one({"_id": oid})
         return cls(doc) if doc else None
 
+    SORTS = {
+        "newest": [("created_at", -1)],
+        "oldest": [("created_at", 1)],
+        "name": [("name", 1), ("created_at", -1)],
+    }
+
     @classmethod
-    def find_all(cls, page: int = 1, per_page: int = 20, search: Optional[str] = None):
+    def find_all(cls, page: int = 1, per_page: int = 20, search: Optional[str] = None, sort: str = "newest"):
         query: Dict[str, Any] = {}
         if search:
-            query = {"$or": [{"name": contains_regex(search)}, {"email": contains_regex(search)}]}
-        cursor = cls._col().find(query).sort("created_at", -1)
+            query = {"$or": [
+                {"name": contains_regex(search)},
+                {"email": contains_regex(search)},
+                {"phone": contains_regex(search)},
+            ]}
+        cursor = cls._col().find(query).sort(cls.SORTS.get(sort, cls.SORTS["newest"]))
         total = cls._col().count_documents(query)
         items = [cls(doc) for doc in cursor.skip((page - 1) * per_page).limit(per_page)]
         return items, total
