@@ -20,6 +20,12 @@ def _configure_logging(app: Flask) -> None:
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 
+def _parse_origins(value: str) -> list:
+    """"a.com, https://b.com/" -> ["a.com", "https://b.com"]: browsers send the
+    Origin header without spaces or a trailing slash, so those would never match."""
+    return [o.strip().rstrip("/") for o in value.split(",") if o.strip()]
+
+
 _DEV_SECRETS = {"dev-secret-change-me", "dev-jwt-secret-change-me"}
 
 
@@ -60,7 +66,7 @@ def create_app(config_object=None):
     limiter.init_app(app)
     cors.init_app(
         app,
-        resources={r"/api/*": {"origins": app.config["ALLOWED_ORIGINS"].split(",")}},
+        resources={r"/api/*": {"origins": _parse_origins(app.config["ALLOWED_ORIGINS"])}},
         supports_credentials=True,
     )
 
