@@ -73,10 +73,24 @@ def create_app(config_object=None):
 
     @app.get("/health")
     def health():
-        return {
-            "status": "ok",
+        """Liveness + dependency check for uptime monitors: 200 when the
+        database answers, 503 when it doesn't. Reveals no secrets."""
+        try:
+            mongo.client.admin.command("ping")
+            database = "ok"
+        except Exception:  # noqa: BLE001 - any failure means "unreachable"
+            app.logger.warning("Health check: database unreachable.")
+            database = "unreachable"
+
+        healthy = database == "ok"
+        body = {
+            "status": "ok" if healthy else "degraded",
+            "database": database,
             "ai_configured": llm_client.is_available,
+            "email_configured": bool(app.config.get("SMTP_USER") and app.config.get("SMTP_PASS")),
+            "google_sign_in": bool(app.config.get("GOOGLE_CLIENT_ID")),
         }
+        return body, 200 if healthy else 503
 
     @app.errorhandler(404)
     def not_found(_):

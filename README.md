@@ -110,7 +110,7 @@ All responses use `{ "success": true, "data": ..., "message": ... }` or
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/health` | — | Status + whether AI is configured |
+| GET | `/health` | — | Health check: database ping + which services are configured (200 ok / 503 database down) |
 | POST | `/api/auth/otp/request` | — | Email a 6-digit code (`purpose`: `login` or `register` + `name`, `phone`) |
 | POST | `/api/auth/otp/verify` | — | Check the code → `{user, access_token}` (creates the account for `register`) |
 | GET | `/api/auth/providers` | — | `{google_client_id}` — whether to show the Google button |
