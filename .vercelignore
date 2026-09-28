@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+tests/
+# Secrets are set in Vercel's Environment Variables, never uploaded.
+.env

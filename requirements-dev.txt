@@ -1,0 +1,4 @@
+# Local development and tests (not installed on Vercel).
+-r requirements.txt
+pytest==8.3.2
+pytest-mock==3.14.0
