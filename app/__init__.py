@@ -80,7 +80,21 @@ def create_app(config_object=None):
 
     @app.errorhandler(404)
     def not_found(_):
-        return error_response("NOT_FOUND", "The requested resource was not found.", 404)
+        # TEMPORARY (Vercel routing diagnosis): show the path Flask received and any
+        # routing headers Vercel added. No secrets or auth headers are included.
+        from flask import request
+
+        routing_headers = [
+            "x-matched-path", "x-vercel-original-path", "x-original-url", "x-forwarded-uri",
+            "x-invoke-path", "x-now-route-matches", "x-forwarded-prefix",
+        ]
+        details = {
+            "path": request.path,
+            "script_root": request.script_root,
+            "headers": {h: request.headers[h] for h in routing_headers if h in request.headers},
+            "build": "09d93a3+diag",
+        }
+        return error_response("NOT_FOUND", "The requested resource was not found.", 404, details)
 
     @app.errorhandler(413)
     def too_large(_):
